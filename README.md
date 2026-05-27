@@ -32,4 +32,4 @@
 - GitHub 저장소: `codex-maintenance-chart`
 - Vercel: 정적 사이트 배포
 
-배포 URL은 Vercel 배포 후 이 문서에 기록합니다.
+배포 URL: <https://codex-maintenance-chart.vercel.app>
