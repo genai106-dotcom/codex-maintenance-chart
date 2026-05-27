@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2022-2024 장비 유지보수 비용 분석</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #20242a;
+      --muted: #626b77;
+      --line: #d9dee8;
+      --panel: #ffffff;
+      --page: #f6f7fa;
+      --bar: #267c8f;
+      --bar-strong: #155e70;
+      --line-accent: #d4662b;
+      --good: #2f7d52;
+      --warn: #a35221;
+      --shadow: 0 18px 40px rgba(30, 40, 55, 0.09);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page);
+      font-family: "Segoe UI", "Noto Sans KR", Arial, sans-serif;
+      line-height: 1.5;
+    }
+
+    main {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 36px 0 44px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.6fr);
+      gap: 24px;
+      align-items: end;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .mobile-break {
+      display: none;
+    }
+
+    .lead {
+      max-width: 760px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.05rem;
+      overflow-wrap: anywhere;
+    }
+
+    .source {
+      justify-self: end;
+      width: 100%;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .source span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .source strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 0.96rem;
+      word-break: keep-all;
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .kpi {
+      min-height: 112px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .kpi .label {
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 0.84rem;
+      font-weight: 700;
+    }
+
+    .kpi .value {
+      font-size: 1.42rem;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .kpi .note {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .chart-panel {
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: start;
+      margin-bottom: 18px;
+    }
+
+    .chart-header h2 {
+      margin: 0 0 5px;
+      font-size: 1.28rem;
+      letter-spacing: 0;
+    }
+
+    .chart-header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 10px 16px;
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+      white-space: nowrap;
+    }
+
+    .legend span {
+      display: inline-flex;
+      gap: 7px;
+      align-items: center;
+    }
+
+    .legend i {
+      display: inline-block;
+      width: 24px;
+      height: 4px;
+      border-radius: 999px;
+      background: var(--bar);
+    }
+
+    .legend .line i {
+      height: 3px;
+      background: var(--line-accent);
+    }
+
+    .chart-wrap {
+      overflow-x: auto;
+      padding-bottom: 3px;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      min-width: 720px;
+      height: auto;
+    }
+
+    .axis {
+      stroke: var(--line);
+      stroke-width: 1;
+    }
+
+    .grid {
+      stroke: #e8ebf1;
+      stroke-width: 1;
+    }
+
+    .bar {
+      fill: var(--bar);
+    }
+
+    .bar.highlight {
+      fill: var(--bar-strong);
+    }
+
+    .trend-line {
+      fill: none;
+      stroke: var(--line-accent);
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .dot {
+      fill: var(--panel);
+      stroke: var(--line-accent);
+      stroke-width: 4;
+    }
+
+    .chart-text {
+      fill: var(--ink);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .chart-muted {
+      fill: var(--muted);
+      font-size: 12px;
+    }
+
+    .callout {
+      fill: #fff8f3;
+      stroke: #ebb992;
+      stroke-width: 1;
+    }
+
+    .callout-text {
+      fill: var(--warn);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .details {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 0.8fr);
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .detail-block {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfe;
+    }
+
+    .detail-block h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .detail-block p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .detail-block strong {
+      color: var(--ink);
+    }
+
+    footer {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    @media (max-width: 720px) {
+      main {
+        width: min(100% - 22px, 1120px);
+        padding-top: 22px;
+      }
+
+      header,
+      .details {
+        grid-template-columns: 1fr;
+      }
+
+      .source {
+        justify-self: stretch;
+      }
+
+      .kpis {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-panel {
+        padding: 16px;
+      }
+
+      .chart-header {
+        display: block;
+      }
+
+      .legend {
+        justify-content: flex-start;
+        margin-top: 12px;
+      }
+
+      .mobile-break {
+        display: block;
+      }
+
+      svg {
+        min-width: 640px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      main {
+        width: min(100% - 22px, 368px);
+        margin-left: 11px;
+        margin-right: auto;
+      }
+
+      h1 {
+        font-size: 1.82rem;
+      }
+
+      .kpi {
+        min-height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>장비 유지보수 비용은 증가,<br class="mobile-break"> 건수는 정체</h1>
+        <p class="lead">2022-2024년 유지보수 이력 기준, 비용과 수리 시간은 증가했습니다.<br class="mobile-break"> 2024년은 건수가 줄었지만 비용이 가장 높아 고비용 장애 관리가 핵심 과제입니다.</p>
+      </div>
+      <aside class="source" aria-label="데이터 출처">
+        <span>Source</span>
+        <strong>장비유지보수_2022-2024.csv</strong>
+      </aside>
+    </header>
+
+    <section class="kpis" aria-label="핵심 지표">
+      <div class="kpi">
+        <div class="label">분석 기간</div>
+        <div class="value">2022-2024</div>
+        <div class="note">총 229건</div>
+      </div>
+      <div class="kpi">
+        <div class="label">총 비용</div>
+        <div class="value">6,823만원</div>
+        <div class="note">비용_원 합계</div>
+      </div>
+      <div class="kpi">
+        <div class="label">총 수리 시간</div>
+        <div class="value">671.5시간</div>
+        <div class="note">수리시간_시간 합계</div>
+      </div>
+      <div class="kpi">
+        <div class="label">비용 증가율</div>
+        <div class="value">+43.2%</div>
+        <div class="note">2022년 대비 2024년</div>
+      </div>
+    </section>
+
+    <section class="chart-panel" aria-labelledby="chart-title">
+      <div class="chart-header">
+        <div>
+          <h2 id="chart-title">연도별 유지보수 비용과 발생 건수</h2>
+          <p>막대는 총 비용, 선은 유지보수 발생 건수를 나타냅니다.</p>
+        </div>
+        <div class="legend" aria-label="범례">
+          <span><i aria-hidden="true"></i>총 비용</span>
+          <span class="line"><i aria-hidden="true"></i>발생 건수</span>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <svg id="maintenanceChart" role="img" aria-labelledby="chartSvgTitle chartSvgDesc" viewBox="0 0 920 480">
+          <title id="chartSvgTitle">2022년부터 2024년까지 장비 유지보수 비용과 발생 건수 콤보 차트</title>
+          <desc id="chartSvgDesc">2024년은 73건으로 발생 건수가 가장 적지만 총 비용은 2706만원으로 가장 높습니다.</desc>
+        </svg>
+      </div>
+      <div class="details">
+        <div class="detail-block">
+          <h3>해석</h3>
+          <p><strong>2024년 비용은 2,706만원</strong>으로 2022년 대비 43.2% 증가했습니다. 같은 기간 발생 건수는 77건에서 73건으로 감소해, 건수보다 건당 비용과 수리 난이도 변화가 더 중요합니다.</p>
+        </div>
+        <div class="detail-block">
+          <h3>데이터 기준</h3>
+          <p>원본 CSV의 <strong>비용_원</strong>, <strong>수리시간_시간</strong>, <strong>날짜</strong> 필드를 연도 단위로 집계했습니다. 중복 제거 또는 임의 보정은 하지 않았습니다.</p>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      Module2 데이터 분석 실습자료 기준. 단위: 비용은 만원, 건수는 연간 유지보수 기록 수.
+    </footer>
+  </main>
+
+  <script>
+    const yearlyData = [
+      { year: "2022", incidents: 77, costWon: 18890000, repairHours: 199.5 },
+      { year: "2023", incidents: 79, costWon: 22283000, repairHours: 222 },
+      { year: "2024", incidents: 73, costWon: 27060000, repairHours: 250 },
+    ];
+
+    const svg = document.querySelector("#maintenanceChart");
+    const ns = "http://www.w3.org/2000/svg";
+    const width = 920;
+    const height = 480;
+    const margin = { top: 34, right: 86, bottom: 68, left: 86 };
+    const plot = {
+      x: margin.left,
+      y: margin.top,
+      width: width - margin.left - margin.right,
+      height: height - margin.top - margin.bottom,
+    };
+
+    const maxCost = 30000000;
+    const minIncidents = 68;
+    const maxIncidents = 82;
+    const barWidth = 118;
+    const groupGap = plot.width / yearlyData.length;
+
+    const formatWon = (value) => `${Math.round(value / 10000).toLocaleString("ko-KR")}만원`;
+
+    function createSvgElement(tag, attrs = {}) {
+      const node = document.createElementNS(ns, tag);
+      Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, value));
+      svg.appendChild(node);
+      return node;
+    }
+
+    function costY(value) {
+      return plot.y + plot.height - (value / maxCost) * plot.height;
+    }
+
+    function incidentY(value) {
+      return plot.y + plot.height - ((value - minIncidents) / (maxIncidents - minIncidents)) * plot.height;
+    }
+
+    function xForIndex(index) {
+      return plot.x + groupGap * index + groupGap / 2;
+    }
+
+    [0, 10000000, 20000000, 30000000].forEach((tick) => {
+      const y = costY(tick);
+      createSvgElement("line", { x1: plot.x, x2: plot.x + plot.width, y1: y, y2: y, class: "grid" });
+      createSvgElement("text", {
+        x: plot.x - 14,
+        y: y + 5,
+        "text-anchor": "end",
+        class: "chart-muted",
+      }).textContent = tick === 0 ? "0" : formatWon(tick);
+    });
+
+    [70, 75, 80].forEach((tick) => {
+      const y = incidentY(tick);
+      createSvgElement("text", {
+        x: plot.x + plot.width + 18,
+        y: y + 5,
+        class: "chart-muted",
+      }).textContent = `${tick}건`;
+    });
+
+    createSvgElement("line", {
+      x1: plot.x,
+      x2: plot.x,
+      y1: plot.y,
+      y2: plot.y + plot.height,
+      class: "axis",
+    });
+    createSvgElement("line", {
+      x1: plot.x,
+      x2: plot.x + plot.width,
+      y1: plot.y + plot.height,
+      y2: plot.y + plot.height,
+      class: "axis",
+    });
+
+    createSvgElement("text", { x: plot.x, y: 18, class: "chart-muted" }).textContent = "비용";
+    createSvgElement("text", { x: plot.x + plot.width + 16, y: 18, class: "chart-muted" }).textContent = "건수";
+
+    yearlyData.forEach((item, index) => {
+      const x = xForIndex(index);
+      const barHeight = plot.y + plot.height - costY(item.costWon);
+      const barX = x - barWidth / 2;
+      const barY = costY(item.costWon);
+      const isHighlight = item.year === "2024";
+
+      createSvgElement("rect", {
+        x: barX,
+        y: barY,
+        width: barWidth,
+        height: barHeight,
+        rx: 8,
+        class: isHighlight ? "bar highlight" : "bar",
+      });
+
+      createSvgElement("text", {
+        x,
+        y: barY - 12,
+        "text-anchor": "middle",
+        class: "chart-text",
+      }).textContent = formatWon(item.costWon);
+
+      createSvgElement("text", {
+        x,
+        y: plot.y + plot.height + 35,
+        "text-anchor": "middle",
+        class: "chart-text",
+      }).textContent = item.year;
+    });
+
+    const points = yearlyData.map((item, index) => [xForIndex(index), incidentY(item.incidents)]);
+    const path = points.map(([x, y], index) => `${index === 0 ? "M" : "L"} ${x} ${y}`).join(" ");
+    createSvgElement("path", { d: path, class: "trend-line" });
+
+    yearlyData.forEach((item, index) => {
+      const [x, y] = points[index];
+      const incidentLabel = item.year === "2024"
+        ? { x: x + 72, y: y - 18, anchor: "start" }
+        : { x, y: y - 46, anchor: "middle" };
+      createSvgElement("circle", { cx: x, cy: y, r: 7, class: "dot" });
+      createSvgElement("text", {
+        x: incidentLabel.x,
+        y: incidentLabel.y,
+        "text-anchor": incidentLabel.anchor,
+        class: "chart-text",
+      }).textContent = `${item.incidents}건`;
+    });
+
+    createSvgElement("rect", { x: 626, y: 126, width: 214, height: 64, rx: 8, class: "callout" });
+    createSvgElement("text", { x: 642, y: 153, class: "callout-text" }).textContent = "2024년: 건수는 감소";
+    createSvgElement("text", { x: 642, y: 175, class: "callout-text" }).textContent = "비용은 최고치";
+  </script>
+</body>
+</html>
