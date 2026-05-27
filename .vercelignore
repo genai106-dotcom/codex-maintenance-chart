@@ -1,0 +1,5 @@
+.git/
+.chrome-profile*/
+test-output/
+node_modules/
+*.log
